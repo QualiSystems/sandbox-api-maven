@@ -2,6 +2,6 @@
 target
 work
 Debug.bat
-cloudshell.iml
+cloudshell-sandbox.iml
 .gitignore
 .idea/
