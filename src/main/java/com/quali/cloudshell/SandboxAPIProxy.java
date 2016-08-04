@@ -39,7 +39,7 @@ public class SandboxAPIProxy {
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException {
         RestResponse response = Login();
 
-        String url = GetBaseUrl() + Constants.BLUEPRINTS_URI  + URLEncoder.encode(blueprintName, "UTF-8") +"/start";
+        String url = GetBaseUrl(true) + Constants.BLUEPRINTS_URI  + URLEncoder.encode(blueprintName, "UTF-8") +"/start";
 
         StringEntity params = null;
         String sandboxDuration = "PT" + String.valueOf(duration) + "M";
@@ -54,6 +54,7 @@ public class SandboxAPIProxy {
             if (message.equals(Constants.BLUEPRINT_CONFLICT_ERROR)){
                 throw new ReserveBluePrintConflictException(blueprintName,message);
             }
+            logger.Info("ERROR: " + result);
             throw new SandboxApiException(blueprintName);
         }
         String newSb = result.getString("id");
@@ -68,7 +69,7 @@ public class SandboxAPIProxy {
 
     public void StopSandbox(String sandboxId, boolean isSync) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         RestResponse response = Login();
-        String url = GetBaseUrl() + Constants.SANDBOXES_URI  + sandboxId + "/stop";
+        String url = GetBaseUrl(true) + Constants.SANDBOXES_URI  + sandboxId + "/stop";
         JSONObject result = HTTPWrapper.ExecutePost(url, response.getContent(), null, this.server.ignoreSSL);
         if (result.containsKey(Constants.ERROR_CATEGORY)) {
             throw new SandboxApiException("Failed to stop blueprint: " + result);
@@ -86,7 +87,7 @@ public class SandboxAPIProxy {
     }
 
     private RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-        return HTTPWrapper.InvokeLogin(GetBaseUrl(),
+        return HTTPWrapper.InvokeLogin(GetBaseUrl(false),
                 this.server.user,
                 this.server.pw,
                 this.server.domain,
@@ -118,7 +119,7 @@ public class SandboxAPIProxy {
 
     public JSONObject SandboxDetails(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         RestResponse response = Login();
-        String url = GetBaseUrl() + Constants.SANDBOXES_URI + sb;
+        String url = GetBaseUrl(true) + Constants.SANDBOXES_URI + sb;
         RestResponse result = HTTPWrapper.ExecuteGet(url, response.getContent(), this.server.ignoreSSL);
 
         JSONObject j = JSONObject.fromObject(result.getContent());
@@ -129,9 +130,11 @@ public class SandboxAPIProxy {
         return j;
     }
 
-    private String GetBaseUrl()
+    private String GetBaseUrl(boolean versioned)
     {
-        return this.server.serverAddress + "/Api" + Constants.API_VERSION;
+        if (versioned)
+            return this.server.serverAddress + "/Api" + Constants.API_VERSION;
+        return this.server.serverAddress + "/Api";
     }
 
 }
