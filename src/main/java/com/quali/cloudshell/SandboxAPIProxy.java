@@ -131,7 +131,7 @@ public class SandboxAPIProxy {
 
     private String GetBaseUrl()
     {
-        return this.server.serverAddress + "/Api";
+        return this.server.serverAddress + "/Api" + Constants.API_VERSION;
     }
 
 }
