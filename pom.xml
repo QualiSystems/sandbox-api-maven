@@ -4,7 +4,7 @@
   <groupId>com.quali.cloudshell</groupId>
   <artifactId>sandbox-api</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
 
   <name>cloudshell-sandbox</name>
   <description>CloudShell Sandbox java gateway project</description>
@@ -17,6 +17,12 @@
       <organization>Quali</organization>
     </developer>
   </developers>
+
+  <scm>
+    <url>https://github.com/QualiSystems/sandbox-api-maven</url>
+    <connection>scm:git:git://github.com/QualiSystems/sandbox-api-maven.git</connection>
+    <developerConnection>scm:git:git@github.com:QualiSystems/sandbox-api-maven.git</developerConnection>
+  </scm>
 
   <licenses>
     <license>
@@ -110,20 +116,20 @@
           </execution>
         </executions>
       </plugin>
-      <!--<plugin>-->
-        <!--<groupId>org.apache.maven.plugins</groupId>-->
-        <!--<artifactId>maven-gpg-plugin</artifactId>-->
-        <!--<version>1.5</version>-->
-        <!--<executions>-->
-          <!--<execution>-->
-            <!--<id>sign-artifacts</id>-->
-            <!--<phase>verify</phase>-->
-            <!--<goals>-->
-              <!--<goal>sign</goal>-->
-            <!--</goals>-->
-          <!--</execution>-->
-        <!--</executions>-->
-      <!--</plugin>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
