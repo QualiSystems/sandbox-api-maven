@@ -61,7 +61,7 @@ public class SandboxAPIProxy {
 
         if (isSync)
         {
-            WaitForSandBox(newSb, "Ready", 300, this.server.ignoreSSL);
+            WaitForSandBox(newSb, "Ready", Constants.TIMEOUT, this.server.ignoreSSL);
         }
 
         return newSb;
@@ -78,7 +78,7 @@ public class SandboxAPIProxy {
         {
             if (isSync)
             {
-                WaitForSandBox(sandboxId, "Ended", 300, this.server.ignoreSSL);
+                WaitForSandBox(sandboxId, "Ended", Constants.TIMEOUT, this.server.ignoreSSL);
             }
         }
         catch (Exception e)

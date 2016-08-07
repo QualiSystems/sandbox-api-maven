@@ -7,4 +7,5 @@ public class Constants {
     public static String SANDBOXES_URI = "/sandboxes/";
     public static String BLUEPRINTS_URI = "/blueprints/";
     public static String API_VERSION = "/v1";
+    public static int TIMEOUT=300;
 }
