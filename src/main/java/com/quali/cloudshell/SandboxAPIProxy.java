@@ -94,7 +94,7 @@ public class SandboxAPIProxy {
                 this.server.ignoreSSL);
     }
 
-    private void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         long startTime = System.currentTimeMillis();
 
         String sandboxStatus = GetSandBoxStatus(sandboxId);

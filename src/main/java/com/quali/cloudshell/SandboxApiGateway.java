@@ -45,17 +45,21 @@ public class SandboxApiGateway
         proxy.StopSandbox(sandboxId, isSync);
     }
 
-    public String startBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName)
+    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        proxy.WaitForSandBox(sandboxId,status,timeoutSec,ignoreSSL);
+    }
+
+    public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException {
 
         if (StringUtils.isBlank(sandboxName))
             sandboxName = blueprintName + "_" + java.util.UUID.randomUUID().toString().substring(0, 5);
 
-        logger.Info("startBlueprint: sandbox name set to be " + sandboxName);
+        logger.Info("StartBlueprint: sandbox name set to be " + sandboxName);
 
         try {
             String sandboxId = proxy.StartBluePrint(blueprintName, sandboxName, duration, isSync);
-            logger.Info("startBlueprint: sandbox started with id: " + sandboxId);
+            logger.Info("StartBlueprint: sandbox started with id: " + sandboxId);
             return sandboxId;
         }
         catch (ReserveBluePrintConflictException ce){
