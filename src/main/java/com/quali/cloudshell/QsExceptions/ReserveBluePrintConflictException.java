@@ -8,7 +8,7 @@ public class ReserveBluePrintConflictException extends SandboxApiException {
     private String bluePrintIdentifier;
 
     public ReserveBluePrintConflictException(String bluePrintIdentifier, String message) {
-        super(String.format("Blueprint: %1$d throw conflict exception %2$d",bluePrintIdentifier, message));
+        super("Blueprint: " + bluePrintIdentifier + " throw conflict exception " + message);
     }
 
     public String getBluePrintIdentifier() {
