@@ -1,5 +1,6 @@
 package com.quali.cloudshell;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.QsExceptions.SandboxApiException;
 import org.apache.commons.lang.StringUtils;
@@ -8,6 +9,8 @@ import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SandboxApiGateway
 {
@@ -49,8 +52,8 @@ public class SandboxApiGateway
         proxy.WaitForSandBox(sandboxId,status,timeoutSec,ignoreSSL);
     }
 
-    public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName)
-            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException {
+    public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName,  Map<String, String> parameters)
+            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException, JsonProcessingException {
 
         if (StringUtils.isBlank(sandboxName))
             sandboxName = blueprintName + "_" + java.util.UUID.randomUUID().toString().substring(0, 5);
@@ -58,7 +61,7 @@ public class SandboxApiGateway
         logger.Info("StartBlueprint: sandbox name set to be " + sandboxName);
 
         try {
-            String sandboxId = proxy.StartBluePrint(blueprintName, sandboxName, duration, isSync);
+            String sandboxId = proxy.StartBluePrint(blueprintName, sandboxName, duration, isSync, parameters);
             logger.Info("StartBlueprint: sandbox started with id: " + sandboxId);
             return sandboxId;
         }

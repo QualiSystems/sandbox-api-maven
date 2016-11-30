@@ -14,6 +14,8 @@
  */
 package com.quali.cloudshell;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.QsExceptions.SandboxApiException;
 import net.sf.json.JSONObject;
@@ -24,6 +26,7 @@ import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 public class SandboxAPIProxy {
 
@@ -35,8 +38,8 @@ public class SandboxAPIProxy {
         this.logger = logger;
     }
 
-    public String StartBluePrint(String blueprintName, String sandboxName, int duration, boolean isSync)
-            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException {
+    public String StartBluePrint(String blueprintName, String sandboxName, int duration, boolean isSync, Map<String, String> parameters)
+            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException, JsonProcessingException {
         RestResponse response = Login();
 
         String url = GetBaseUrl(true) + Constants.BLUEPRINTS_URI  + URLEncoder.encode(blueprintName, "UTF-8") +"/start";
@@ -44,8 +47,17 @@ public class SandboxAPIProxy {
         StringEntity params = null;
         String sandboxDuration = "PT" + String.valueOf(duration) + "M";
 
-        String string = "{\"name\":\"" + sandboxName + "\",\"duration\":\"" + sandboxDuration + "\"}";
-        params = new StringEntity(string);
+        StartSandBoxModel startSandBoxModel = new StartSandBoxModel(sandboxName, sandboxDuration);
+
+        if (parameters != null) {
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                startSandBoxModel.addParam(new StartSandBoxModel.Param(entry.getKey(), entry.getValue()));
+            }
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonInString = mapper.writeValueAsString(startSandBoxModel);
+        params = new StringEntity(jsonInString);
 
         JSONObject result = HTTPWrapper.ExecutePost(url, response.getContent(), params, this.server.ignoreSSL);
 
