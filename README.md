@@ -5,8 +5,10 @@ Maven project for easy use of the CloudShell Sandbox API
 
 to add this to your project, add this section to your POM file:
 
+```xml
 <dependency>
     <groupId>com.quali.cloudshell</groupId>
     <artifactId>sandbox-api</artifactId>
     <version>1.0.5-SNAPSHOT</version>
 </dependency>
+```
