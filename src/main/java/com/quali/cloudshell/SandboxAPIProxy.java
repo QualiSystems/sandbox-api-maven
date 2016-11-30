@@ -21,6 +21,7 @@ import com.quali.cloudshell.QsExceptions.SandboxApiException;
 import net.sf.json.JSONObject;
 import org.apache.http.entity.StringEntity;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
@@ -39,7 +40,7 @@ public class SandboxAPIProxy {
     }
 
     public String StartBluePrint(String blueprintName, String sandboxName, int duration, boolean isSync, Map<String, String> parameters)
-            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException, JsonProcessingException {
+            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         RestResponse response = Login();
 
         String url = GetBaseUrl(true) + Constants.BLUEPRINTS_URI  + URLEncoder.encode(blueprintName, "UTF-8") +"/start";
@@ -79,7 +80,7 @@ public class SandboxAPIProxy {
         return newSb;
     }
 
-    public void StopSandbox(String sandboxId, boolean isSync) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public void StopSandbox(String sandboxId, boolean isSync) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         RestResponse response = Login();
         String url = GetBaseUrl(true) + Constants.SANDBOXES_URI  + sandboxId + "/stop";
         JSONObject result = HTTPWrapper.ExecutePost(url, response.getContent(), null, this.server.ignoreSSL);
@@ -98,7 +99,7 @@ public class SandboxAPIProxy {
         }
     }
 
-    private RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+    private RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
         return HTTPWrapper.InvokeLogin(GetBaseUrl(false),
                 this.server.user,
                 this.server.pw,
@@ -106,7 +107,7 @@ public class SandboxAPIProxy {
                 this.server.ignoreSSL);
     }
 
-    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         long startTime = System.currentTimeMillis();
 
         String sandboxStatus = GetSandBoxStatus(sandboxId);
@@ -125,11 +126,11 @@ public class SandboxAPIProxy {
         }
     }
 
-    private String GetSandBoxStatus(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    private String GetSandBoxStatus(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         return SandboxDetails(sb).getString("state");
     }
 
-    public JSONObject SandboxDetails(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public JSONObject SandboxDetails(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         RestResponse response = Login();
         String url = GetBaseUrl(true) + Constants.SANDBOXES_URI + sb;
         RestResponse result = HTTPWrapper.ExecuteGet(url, response.getContent(), this.server.ignoreSSL);

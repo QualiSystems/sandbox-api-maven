@@ -5,6 +5,7 @@ import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.QsExceptions.SandboxApiException;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -37,23 +38,23 @@ public class SandboxApiGateway
     }
 
     public String GetSandboxDetails(String sandboxId)
-            throws SandboxApiException, UnsupportedEncodingException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+            throws SandboxApiException, IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         logger.Info("GetSandboxDetails Starting to run");
         return proxy.SandboxDetails(sandboxId).toString();
     }
 
     public void StopSandbox(String sandboxId, boolean isSync)
-            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         logger.Info("StopSandbox Starting to run");
         proxy.StopSandbox(sandboxId, isSync);
     }
 
-    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         proxy.WaitForSandBox(sandboxId,status,timeoutSec,ignoreSSL);
     }
 
     public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName,  Map<String, String> parameters)
-            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnsupportedEncodingException, JsonProcessingException {
+            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
 
         if (StringUtils.isBlank(sandboxName))
             sandboxName = blueprintName + "_" + java.util.UUID.randomUUID().toString().substring(0, 5);
