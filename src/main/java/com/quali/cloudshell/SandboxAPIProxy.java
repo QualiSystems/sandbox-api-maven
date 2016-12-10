@@ -14,15 +14,16 @@
  */
 package com.quali.cloudshell;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.QsExceptions.SandboxApiException;
 import net.sf.json.JSONObject;
 import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -141,6 +142,19 @@ public class SandboxAPIProxy {
             throw new RuntimeException("Failed to get sandbox details: " + j);
         }
         return j;
+    }
+
+    public JsonArray GetBlueprints() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        RestResponse response = Login();
+        String url = GetBaseUrl(true) + Constants.BLUEPRINTS_URI;
+        RestResponse result = HTTPWrapper.ExecuteGet(url, response.getContent(), this.server.ignoreSSL);
+
+        JsonElement j = (new JsonParser()).parse(result.getContent());
+
+        if (j.toString().contains(Constants.ERROR_CATEGORY)) {
+            throw new RuntimeException("Failed to get blueprints: " + j);
+        }
+        return j.getAsJsonArray();
     }
 
     private String GetBaseUrl(boolean versioned)

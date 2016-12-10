@@ -1,29 +1,21 @@
 package com.quali.cloudshell;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.JsonElement;
 import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.QsExceptions.SandboxApiException;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class SandboxApiGateway
 {
     private final SandboxAPIProxy proxy;
     private final QsLogger logger;
-
-    /*
-        Tomer:
-            TODO:
-                Add Validations for parameters
-                Add "test Connection" to make sure the gateway initialized properly
-     */
 
     public SandboxApiGateway(String serverAddress, String user, String pw, String domain, boolean ignoreSSL, QsLogger qsLogger)
     {
@@ -39,13 +31,21 @@ public class SandboxApiGateway
 
     public String GetSandboxDetails(String sandboxId)
             throws SandboxApiException, IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        logger.Info("GetSandboxDetails Starting to run");
         return proxy.SandboxDetails(sandboxId).toString();
+    }
+
+    public ArrayList<String> GetBlueprintsNames()
+            throws SandboxApiException, IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        ArrayList<String> names = new ArrayList<String>();
+        for (JsonElement blueprint : proxy.GetBlueprints()) {
+            names.add(blueprint.getAsJsonObject().get("name").getAsString());
+        }
+        return names;
     }
 
     public void StopSandbox(String sandboxId, boolean isSync)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        logger.Info("StopSandbox Starting to run");
+        logger.Info("Stopping Sandbox " + sandboxId);
         proxy.StopSandbox(sandboxId, isSync);
     }
 
