@@ -43,6 +43,11 @@ public class SandboxApiGateway
         return names;
     }
 
+
+    public RestResponse TryLogin() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        return proxy.Login();
+    }
+
     public void StopSandbox(String sandboxId, boolean isSync)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         logger.Info("Stopping Sandbox " + sandboxId);

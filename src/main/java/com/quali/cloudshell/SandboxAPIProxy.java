@@ -100,7 +100,7 @@ public class SandboxAPIProxy {
         }
     }
 
-    private RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
+    public RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
         return HTTPWrapper.InvokeLogin(GetBaseUrl(false),
                 this.server.user,
                 this.server.pw,
