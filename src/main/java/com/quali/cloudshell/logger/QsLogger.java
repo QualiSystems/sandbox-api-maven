@@ -1,4 +1,4 @@
-package com.quali.cloudshell;
+package com.quali.cloudshell.logger;
 
 public abstract class QsLogger {
     public abstract void Debug(String message);

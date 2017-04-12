@@ -1,8 +1,6 @@
-package com.quali.cloudshell.QsExceptions;
+package com.quali.cloudshell.qsExceptions;
 
-/**
- * Created by Tomer.a on 8/2/2016.
- */
+
 public class ReserveBluePrintConflictException extends SandboxApiException {
 
     private String bluePrintIdentifier;

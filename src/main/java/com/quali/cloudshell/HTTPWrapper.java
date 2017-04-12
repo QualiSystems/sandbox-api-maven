@@ -1,5 +1,6 @@
 package com.quali.cloudshell;
 
+
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -24,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class HTTPWrapper {
 
-    public static RestResponse ExecuteGet(String url, String token, boolean IgnoreSSL) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+    public static RestResponse ExecuteGet(String url, String token, boolean IgnoreSSL) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
         HttpClient client = CreateClient(IgnoreSSL);
         HttpGet request = new HttpGet(url);
         request.addHeader("Authorization", "Basic " + token);
@@ -44,14 +45,10 @@ public class HTTPWrapper {
         }
         String line;
         String out = "";
-        try {
-            while ((line = rd.readLine()) != null) {
-                out += line;
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        while ((line = rd.readLine()) != null) {
+            out += line;
         }
+
         return new RestResponse(out, responseCode);
 
     }
@@ -70,7 +67,7 @@ public class HTTPWrapper {
     }
 
     public static JSONObject ExecutePost(String url, String token, StringEntity params, boolean IgnoreSSL)
-            throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+            throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
 
         HttpClient client = CreateClient(IgnoreSSL);
         HttpPost request = new HttpPost(url);
@@ -95,60 +92,47 @@ public class HTTPWrapper {
         }
         String line;
         String out = "";
-        try {
-            while ((line = rd.readLine()) != null) {
-                out += line;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        while ((line = rd.readLine()) != null) {
+            out += line;
         }
         RestResponse result = new RestResponse(out, responseCode);
         return JSONObject.fromObject(result.getContent());
     }
 
-    public static RestResponse InvokeLogin(String url, String user, String password, String domain, boolean IgnoreSSL) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+    public static RestResponse InvokeLogin(String url, String user, String password, String domain, boolean IgnoreSSL) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException, ClientProtocolException, UnsupportedEncodingException {
         url = url + "/Login";
         HttpClient client = CreateClient(IgnoreSSL);
         StringBuilder result = new StringBuilder();
+        HttpPut putRequest = new HttpPut(url);
+        putRequest.addHeader("Content-Type", "application/json");
+        putRequest.addHeader("Accept", "application/json");
+        JSONObject keyArg = new JSONObject();
+        keyArg.put("username", user);
+        keyArg.put("password", password);
+        keyArg.put("domain", domain);
+        StringEntity input;
+
+        input = new StringEntity(keyArg.toString());
+        putRequest.setEntity(input);
+
+        HttpResponse response = null;
         try {
-            HttpPut putRequest = new HttpPut(url);
-            putRequest.addHeader("Content-Type", "application/json");
-            putRequest.addHeader("Accept", "application/json");
-            JSONObject keyArg = new JSONObject();
-            keyArg.put("username", user);
-            keyArg.put("password", password);
-            keyArg.put("domain", domain);
-            StringEntity input;
-            try {
-                input = new StringEntity(keyArg.toString());
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-                throw e;
-            }
-            putRequest.setEntity(input);
-            HttpResponse response = client.execute(putRequest);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != 200) {
-                throw new RuntimeException("Failed to login: "
-                        + statusCode);
-            }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (response.getEntity().getContent())));
-            String output;
-            while ((output = br.readLine()) != null) {
-                result.append(output);
-            }
-
-            String out =  result.toString().replace("\"","");
-            return new RestResponse(out,statusCode);
-
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            response = client.execute(putRequest);
+        } catch (Exception e) {
+            return new RestResponse("Error: " + e.getMessage(),400);
         }
-        return null;
+
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                (response.getEntity().getContent())));
+
+        String output;
+        while ((output = br.readLine()) != null) {
+            result.append(output);
+        }
+
+        String out =  result.toString().replace("\"","");
+        return new RestResponse(out,statusCode);
     }
 }
