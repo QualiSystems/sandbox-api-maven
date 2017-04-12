@@ -114,16 +114,19 @@ public class HTTPWrapper {
 
         input = new StringEntity(keyArg.toString());
         putRequest.setEntity(input);
-        HttpResponse response = client.execute(putRequest);
+
+        HttpResponse response = null;
+        try {
+            response = client.execute(putRequest);
+        } catch (Exception e) {
+            return new RestResponse("Error: " + e.getMessage(),400);
+        }
 
         int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != 200) {
-            throw new RuntimeException("Failed to login: "
-                    + statusCode);
-        }
 
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 (response.getEntity().getContent())));
+
         String output;
         while ((output = br.readLine()) != null) {
             result.append(output);

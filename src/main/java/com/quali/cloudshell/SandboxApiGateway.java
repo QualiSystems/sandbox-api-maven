@@ -1,8 +1,9 @@
 package com.quali.cloudshell;
 
 import com.google.gson.JsonElement;
-import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
-import com.quali.cloudshell.QsExceptions.SandboxApiException;
+import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
+import com.quali.cloudshell.qsExceptions.SandboxApiException;
+import com.quali.cloudshell.logger.QsLogger;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class SandboxApiGateway
     }
 
 
-    public RestResponse TryLogin() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public RestResponse TryLogin() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
         return proxy.Login();
     }
 
@@ -61,10 +62,20 @@ public class SandboxApiGateway
     public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName,  Map<String, String> parameters)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
 
+        return Start(blueprintName, duration, isSync, sandboxName, parameters);
+    }
+
+    public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName)
+            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+
+        return Start(blueprintName, duration, isSync, sandboxName, null);
+    }
+
+    private String Start(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         if (StringUtils.isBlank(sandboxName))
             sandboxName = blueprintName + "_" + java.util.UUID.randomUUID().toString().substring(0, 5);
 
-        logger.Info("StartBlueprint: sandbox name set to be " + sandboxName);
+        logger.Info("StartBlueprint: sandbox name set to be \"" + sandboxName + "\"");
 
         try {
             String sandboxId = proxy.StartBluePrint(blueprintName, sandboxName, duration, isSync, parameters);

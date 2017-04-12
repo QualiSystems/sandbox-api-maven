@@ -18,8 +18,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.quali.cloudshell.QsExceptions.ReserveBluePrintConflictException;
-import com.quali.cloudshell.QsExceptions.SandboxApiException;
+import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
+import com.quali.cloudshell.qsExceptions.SandboxApiException;
+import com.quali.cloudshell.logger.QsLogger;
 import net.sf.json.JSONObject;
 import org.apache.http.entity.StringEntity;
 
@@ -68,8 +69,9 @@ public class SandboxAPIProxy {
             if (message.equals(Constants.BLUEPRINT_CONFLICT_ERROR)){
                 throw new ReserveBluePrintConflictException(blueprintName,message);
             }
-            logger.Info("ERROR: " + result);
-            throw new SandboxApiException(blueprintName);
+            String msg = "ERROR: " + message;
+            logger.Info(msg);
+            throw new SandboxApiException(msg);
         }
         String newSb = result.getString("id");
 
@@ -86,7 +88,7 @@ public class SandboxAPIProxy {
         String url = GetBaseUrl(true) + Constants.SANDBOXES_URI  + sandboxId + "/stop";
         JSONObject result = HTTPWrapper.ExecutePost(url, response.getContent(), null, this.server.ignoreSSL);
         if (result.containsKey(Constants.ERROR_CATEGORY)) {
-            throw new SandboxApiException("Failed to stop blueprint: " + result);
+            throw new SandboxApiException("Failed to stop Sandbox: " + result);
         }
         try
         {
@@ -100,12 +102,18 @@ public class SandboxAPIProxy {
         }
     }
 
-    public RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
+    public RestResponse Login() throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException, SandboxApiException {
+        validateServer(this.server);
         return HTTPWrapper.InvokeLogin(GetBaseUrl(false),
                 this.server.user,
                 this.server.pw,
                 this.server.domain,
                 this.server.ignoreSSL);
+    }
+
+    private void validateServer(QsServerDetails server) throws SandboxApiException {
+        if (server.serverAddress == null)
+            throw new SandboxApiException("Failed to obtain CloudShell Sandbox API Server address, Please validate Sandbox API configuration. ");
     }
 
     public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
@@ -127,11 +135,11 @@ public class SandboxAPIProxy {
         }
     }
 
-    private String GetSandBoxStatus(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    private String GetSandBoxStatus(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, SandboxApiException {
         return SandboxDetails(sb).getString("state");
     }
 
-    public JSONObject SandboxDetails(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    public JSONObject SandboxDetails(String sb) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, SandboxApiException {
         RestResponse response = Login();
         String url = GetBaseUrl(true) + Constants.SANDBOXES_URI + sb;
         RestResponse result = HTTPWrapper.ExecuteGet(url, response.getContent(), this.server.ignoreSSL);
@@ -144,7 +152,7 @@ public class SandboxAPIProxy {
         return j;
     }
 
-    public JsonArray GetBlueprints() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    public JsonArray GetBlueprints() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
         RestResponse response = Login();
         String url = GetBaseUrl(true) + Constants.BLUEPRINTS_URI;
         RestResponse result = HTTPWrapper.ExecuteGet(url, response.getContent(), this.server.ignoreSSL);

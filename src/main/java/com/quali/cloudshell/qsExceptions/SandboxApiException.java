@@ -1,4 +1,4 @@
-package com.quali.cloudshell.QsExceptions;
+package com.quali.cloudshell.qsExceptions;
 
 
 public class SandboxApiException extends Exception {
