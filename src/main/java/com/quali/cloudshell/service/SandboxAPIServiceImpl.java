@@ -2,10 +2,10 @@ package com.quali.cloudshell.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.quali.cloudshell.Constants;
 import com.quali.cloudshell.api.*;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import com.quali.cloudshell.qsExceptions.SandboxApiException;
+import okhttp3.*;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -20,10 +20,13 @@ import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 public class SandboxAPIServiceImpl implements SandboxAPIService{
+    private SandboxAPIAuthInterceptor authInterceptor;
     private SandboxAPISpec sandboxAPI = null;
-    private String authToken = "";
+    private User user = null;
 
-    public SandboxAPIServiceImpl(final SandboxServiceConnection connection) {
+    public SandboxAPIServiceImpl(final SandboxServiceConnection connection) throws SandboxApiException {
+
+        user = connection.user;
 
         Gson gson = new GsonBuilder()
                 .setLenient()
@@ -35,20 +38,33 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
             ignoreSsl(builder);
         }
 
-        builder.connectTimeout(connection.connectionTimeoutSec, TimeUnit.SECONDS);
+        builder.connectTimeout(Constants.TIMEOUT, TimeUnit.SECONDS);
 
-        builder.addInterceptor(new Interceptor() {
+        authInterceptor = new SandboxAPIAuthInterceptor(new SandboxAPISpecProvider() {
             @Override
-            public okhttp3.Response intercept(Chain chain) throws IOException {
-                return autenticationInterceptor(chain);
+            public SandboxAPISpec getApi() {
+                return sandboxAPI;
+            }
+
+            @Override
+            public User getUser() {
+                return connection.user;
+            }
+        });
+
+        builder.addInterceptor(authInterceptor);
+
+        builder.authenticator(new Authenticator() {
+            @Override
+            public Request authenticate(Route route, okhttp3.Response response) throws IOException {
+                return null;
             }
         });
 
         OkHttpClient client= builder.build();
 
-        String baseUrl = String.format(connection.protocol + "://%1$s:%2$s",connection.address,connection.port);
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(connection.address)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(client)
                 .build();
@@ -56,11 +72,8 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
 
         sandboxAPI = retrofit.create(SandboxAPISpec.class);
 
-        try {
-            authToken= execute(sandboxAPI.login(connection.user)).getData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if (connection.address == null)
+            throw new SandboxApiException("Failed to obtain CloudShell Sandbox API Server address, Please validate Sandbox API configuration. ");
 
     }
 
@@ -106,18 +119,7 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
 
     }
 
-    private okhttp3.Response autenticationInterceptor(Interceptor.Chain chain) throws IOException {
-        Request request = chain.request();
-
-        Request newRequest = request.newBuilder()
-                .addHeader("Authorization", "Basic " + authToken)
-                .addHeader("Content-Type", "application/json")
-                .build();
-
-        return chain.proceed(newRequest);
-    }
-
-    public ResponseData<String> login(User user) throws RuntimeException, IOException {
+    public ResponseData<String> login() throws RuntimeException, IOException {
         return execute(sandboxAPI.login(user));
     }
 
@@ -125,16 +127,19 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
         return execute(sandboxAPI.getBlueprint());
     }
 
-    public ResponseData<CreateSandboxResponse> createSandbox(String blueprintId, CreateSandboxRequest sandboxRequest) throws RuntimeException, IOException {
-        return execute(sandboxAPI.createSandbox(blueprintId, sandboxRequest));
+    public ResponseData<CreateSandboxResponse> createSandbox(String blueprintId, CreateSandboxRequest sandboxRequest) throws RuntimeException, IOException, SandboxApiException {
+
+        ResponseData<CreateSandboxResponse> responseData = execute(sandboxAPI.createSandbox(blueprintId, sandboxRequest));
+
+        return responseData;
     }
 
-    public ResponseData<DeleteSandboxResponse> stopSandbox(String blueprintId) throws RuntimeException, IOException {
-        return execute(sandboxAPI.stopSandbox(blueprintId));
+    public ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException {
+        return execute(sandboxAPI.stopSandbox(sandboxId));
     }
 
-    public ResponseData<SandboxDetailsResponse> getSandbox(String sandbox) throws RuntimeException, IOException {
-        return execute(sandboxAPI.getSandbox(sandbox));
+    public ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException {
+        return execute(sandboxAPI.getSandbox(sandboxId));
     }
 
     private static <T> ResponseData<T> parseResponse(final Response<T> response) throws IOException {
