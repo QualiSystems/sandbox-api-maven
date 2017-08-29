@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.quali.cloudshell.Constants;
 import com.quali.cloudshell.api.*;
+import com.quali.cloudshell.qsExceptions.InvalidApiCallException;
 import com.quali.cloudshell.qsExceptions.SandboxApiException;
-import okhttp3.*;
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -19,10 +20,11 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
+
 public class SandboxAPIServiceImpl implements SandboxAPIService{
-    private SandboxAPIAuthInterceptor authInterceptor;
     private SandboxAPISpec sandboxAPI = null;
     private User user = null;
+    private String authToken = null;
 
     public SandboxAPIServiceImpl(final SandboxServiceConnection connection) throws SandboxApiException {
 
@@ -38,43 +40,42 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
             ignoreSsl(builder);
         }
 
-        builder.connectTimeout(Constants.TIMEOUT, TimeUnit.SECONDS);
+        builder.connectTimeout(30, TimeUnit.SECONDS);
+        builder.readTimeout(30, TimeUnit.SECONDS);
+        builder.writeTimeout(30, TimeUnit.SECONDS);
+//
+//        builder.connectTimeout(Constants.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+//        builder.readTimeout(Constants.RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-        authInterceptor = new SandboxAPIAuthInterceptor(new SandboxAPISpecProvider() {
+        SandboxAPIAuthenticator sandboxAPIAuthenticator = new SandboxAPIAuthenticator(new SandboxAPIAuthProvider() {
             @Override
-            public SandboxAPISpec getApi() {
-                return sandboxAPI;
+            public String getAuthToken() {
+                return authToken;
             }
 
             @Override
-            public User getUser() {
-                return connection.user;
-            }
-        });
-
-        builder.addInterceptor(authInterceptor);
-
-        builder.authenticator(new Authenticator() {
-            @Override
-            public Request authenticate(Route route, okhttp3.Response response) throws IOException {
-                return null;
+            public void loginAndSetAuthToken() throws IOException, SandboxApiException {
+                authToken = login().getData();
             }
         });
+
+        builder.addInterceptor(new SandboxAPIRequestInterceptor());
+
+        builder.authenticator(sandboxAPIAuthenticator);
 
         OkHttpClient client= builder.build();
 
+        if (connection.serverAddress.isEmpty())
+            throw new SandboxApiException("Failed to obtain CloudShell Sandbox API server address, Please validate Sandbox API configuration. ");
+
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(connection.address)
+                .baseUrl(connection.serverAddress)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(client)
                 .build();
 
 
         sandboxAPI = retrofit.create(SandboxAPISpec.class);
-
-        if (connection.address == null)
-            throw new SandboxApiException("Failed to obtain CloudShell Sandbox API Server address, Please validate Sandbox API configuration. ");
-
     }
 
     private void ignoreSsl(OkHttpClient.Builder builder) {
@@ -119,12 +120,19 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
 
     }
 
-    public ResponseData<String> login() throws RuntimeException, IOException {
-        return execute(sandboxAPI.login(user));
+    public ResponseData<String> login() throws RuntimeException, IOException, SandboxApiException {
+        ResponseData<String> responseData = execute(sandboxAPI.login(user));
+        if (!responseData.isSuccessful())
+            throw new SandboxApiException("Failed to login: " + responseData.getError());
+        return responseData;
     }
 
-    public ResponseData<CreateSandboxResponse[]> getBlueprints() throws RuntimeException, IOException {
+    public ResponseData<CreateSandboxResponse[]> getBlueprints() throws RuntimeException, IOException, SandboxApiException {
         return execute(sandboxAPI.getBlueprint());
+    }
+
+    public ResponseData<SandboxActivity> getSandboxActivity(String sandboxId, Integer tail , Long from_event_id, String since, Boolean error_only) throws RuntimeException, IOException, SandboxApiException {
+        return execute(sandboxAPI.getSandboxActivity(sandboxId, error_only, since, from_event_id, tail));
     }
 
     public ResponseData<CreateSandboxResponse> createSandbox(String blueprintId, CreateSandboxRequest sandboxRequest) throws RuntimeException, IOException, SandboxApiException {
@@ -134,24 +142,27 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
         return responseData;
     }
 
-    public ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException {
+    public ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
         return execute(sandboxAPI.stopSandbox(sandboxId));
     }
 
-    public ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException {
+    public ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
         return execute(sandboxAPI.getSandbox(sandboxId));
     }
 
-    private static <T> ResponseData<T> parseResponse(final Response<T> response) throws IOException {
+    private static <T> ResponseData<T> parseResponse(final Response<T> response) throws IOException, SandboxApiException {
         String message = response.message();
         if (!response.isSuccessful()) {
-            final String err = response.errorBody().string();
-            return ResponseData.error(response.code(),err).setMessage(message);
+            String error = response.errorBody().string();
+            if (error.contains("Invalid Api call")) {
+                throw new InvalidApiCallException(response.raw().request().url().toString());
+            }
+            throw new SandboxApiException(error);
         }
         return ResponseData.ok(response.body(),response.code()).setMessage(message);
     }
 
-    public <T> ResponseData<T> execute(Call<T> call) throws IOException {
+    public <T> ResponseData<T> execute(Call<T> call) throws IOException, SandboxApiException {
         Response<T> execute = call.execute();
         return parseResponse(execute);
     }

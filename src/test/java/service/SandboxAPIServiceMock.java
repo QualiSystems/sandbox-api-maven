@@ -2,6 +2,7 @@ package service;
 
 
 import com.quali.cloudshell.api.*;
+import com.quali.cloudshell.qsExceptions.SandboxApiException;
 import com.quali.cloudshell.service.SandboxAPIService;
 
 import java.io.IOException;
@@ -34,6 +35,11 @@ public class SandboxAPIServiceMock implements SandboxAPIService {
 
     @Override
     public ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException {
+        return null;
+    }
+
+    @Override
+    public ResponseData<SandboxActivity> getSandboxActivity(String sandboxId, Integer tail, Long from_event_id, String since, Boolean error_only) throws RuntimeException, IOException, SandboxApiException {
         return null;
     }
 }

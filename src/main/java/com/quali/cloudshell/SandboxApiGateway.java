@@ -81,4 +81,8 @@ public class SandboxApiGateway
         }
         return null;
     }
+
+    public void VerifyTeardownSucceeded (String sandboxId) throws IOException, SandboxApiException{
+        logic.VerifyTeardownSucceeded(sandboxId);
+    }
 }

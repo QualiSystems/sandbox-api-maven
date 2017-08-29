@@ -15,6 +15,13 @@ public interface SandboxAPISpec {
     Call<SandboxDetailsResponse> getSandbox(
             @Path("sandbox") String sandbox);
 
+    @GET("api/v2/sandboxes/{sandbox}/activity")
+    Call<SandboxActivity> getSandboxActivity(
+            @Path("sandbox") String sandbox,
+            @Query("error_only") Boolean error_only,
+            @Query("since") String since,
+            @Query("from_event_id") Long from_event_id,
+            @Query("tail") Integer tail);
 
     @POST("api/v1/blueprints/{blueprint}/start")
     Call<CreateSandboxResponse> createSandbox(

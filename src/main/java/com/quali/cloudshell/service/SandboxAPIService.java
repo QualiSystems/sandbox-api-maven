@@ -9,9 +9,10 @@ import java.io.IOException;
 
 public interface SandboxAPIService
 {
-      ResponseData<String> login() throws RuntimeException, IOException;
-      ResponseData<CreateSandboxResponse[]> getBlueprints() throws RuntimeException, IOException;
+      ResponseData<String> login() throws RuntimeException, IOException, SandboxApiException;
+      ResponseData<CreateSandboxResponse[]> getBlueprints() throws RuntimeException, IOException, SandboxApiException;
       ResponseData<CreateSandboxResponse> createSandbox(String blueprintId, CreateSandboxRequest sandboxRequest) throws RuntimeException, IOException, SandboxApiException;
-      ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException;
-      ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException;
+      ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException;
+      ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException;
+      ResponseData<SandboxActivity> getSandboxActivity(String sandboxId, Integer tail , Long from_event_id, String since, Boolean error_only) throws RuntimeException, IOException, SandboxApiException;
 }

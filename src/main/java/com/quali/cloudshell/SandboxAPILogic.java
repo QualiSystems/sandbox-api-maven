@@ -18,6 +18,7 @@ import com.quali.cloudshell.api.*;
 import com.quali.cloudshell.logger.QsLogger;
 import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.qsExceptions.SandboxApiException;
+import com.quali.cloudshell.qsExceptions.TeardownFailedException;
 import com.quali.cloudshell.service.SandboxAPIService;
 import com.quali.cloudshell.service.SandboxAPIServiceImpl;
 import com.quali.cloudshell.service.SandboxServiceConnection;
@@ -63,7 +64,7 @@ public class SandboxAPILogic {
 
         if (isSync)
         {
-            WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.TIMEOUT, this.server.ignoreSSL);
+            WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.CONNECT_TIMEOUT_SECONDS, this.server.ignoreSSL);
         }
 
         return sandboxResponse.getData().id;
@@ -74,7 +75,7 @@ public class SandboxAPILogic {
 
         if (isSync)
         {
-            WaitForSandBox(sandboxId, "Ended", Constants.TIMEOUT, this.server.ignoreSSL);
+            WaitForSandBox(sandboxId, "Ended", Constants.CONNECT_TIMEOUT_SECONDS, this.server.ignoreSSL);
         }
     }
 
@@ -105,11 +106,20 @@ public class SandboxAPILogic {
         return sandboxAPIService.getSandbox(sandboxId).getData();
     }
 
-    public String Login() throws IOException {
+    public String Login() throws IOException, SandboxApiException {
         return sandboxAPIService.login().getData();
     }
 
     public ResponseData<CreateSandboxResponse[]> GetBlueprints() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
         return sandboxAPIService.getBlueprints();
+    }
+
+    public void VerifyTeardownSucceeded (String sandboxId) throws IOException, SandboxApiException {
+        ResponseData<SandboxActivity> sandboxActivity = sandboxAPIService.getSandboxActivity(sandboxId, 100, null, null, null);
+        for (SandboxActivityEvent event: sandboxActivity.getData().events) {
+            if (event.event_text.contains("'Teardown' Blueprint command") && event.event_text.contains("failed")){
+                throw new TeardownFailedException(sandboxId, event.event_text);
+            }
+        }
     }
 }
