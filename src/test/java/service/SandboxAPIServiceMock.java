@@ -29,8 +29,7 @@ public class SandboxAPIServiceMock implements SandboxAPIService {
     }
 
     @Override
-    public ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException {
-        return null;
+    public void stopSandbox(String sandboxId) throws RuntimeException, IOException {
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.quali.cloudshell.qsExceptions.TeardownFailedException;
 import com.quali.cloudshell.service.SandboxAPIService;
 import com.quali.cloudshell.service.SandboxAPIServiceImpl;
 import com.quali.cloudshell.service.SandboxServiceConnection;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -29,20 +30,21 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-public class SandboxAPILogic {
+class SandboxAPILogic {
 
     private final QsServerDetails server;
-    private final QsLogger logger;
     private final SandboxAPIService sandboxAPIService;
 
-    public SandboxAPILogic(QsServerDetails server, QsLogger logger) throws SandboxApiException {
+    SandboxAPILogic(QsServerDetails server, QsLogger logger) throws SandboxApiException {
         this.server = server;
-        this.logger = logger;
         this.sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection(server.serverAddress, server.user, server.pw, server.domain, server.ignoreSSL));
     }
 
-    public String StartBluePrint(String blueprintName, String sandboxName, int duration, boolean isSync, Map<String, String> parameters)
+    String StartBlueprint(String blueprintName, String sandboxName, int duration, boolean isSync, Map<String, String> parameters)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+
+        if (StringUtils.isBlank(sandboxName))
+            sandboxName = blueprintName + "_" + java.util.UUID.randomUUID().toString().substring(0, 5);
 
         String sandboxDuration = "PT" + String.valueOf(duration) + "M";
         CreateSandboxRequest sandboxRequest = new CreateSandboxRequest(sandboxDuration, sandboxName);
@@ -53,24 +55,24 @@ public class SandboxAPILogic {
             }
         }
 
-        ResponseData<CreateSandboxResponse> sandboxResponse = sandboxAPIService.createSandbox(blueprintName, sandboxRequest);
+        try {
+            ResponseData<CreateSandboxResponse> sandboxResponse = sandboxAPIService.createSandbox(blueprintName, sandboxRequest);
 
-        if (sandboxResponse.getStatusCode() != 200){
-            if (sandboxResponse.getError().contains(Constants.BLUEPRINT_CONFLICT_ERROR)){
-                throw new ReserveBluePrintConflictException(blueprintName, sandboxResponse.getError());
+            if (isSync)
+                WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.CONNECT_TIMEOUT_SECONDS, this.server.ignoreSSL);
+
+            return sandboxResponse.getData().id;
+        }
+
+        catch (SandboxApiException e){
+            if (e.getMessage().contains(Constants.BLUEPRINT_CONFLICT_ERROR)){
+                throw new ReserveBluePrintConflictException(blueprintName, e.getMessage());
             }
-            throw new SandboxApiException(sandboxResponse.getError());
+            throw new SandboxApiException(e.getMessage());
         }
-
-        if (isSync)
-        {
-            WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.CONNECT_TIMEOUT_SECONDS, this.server.ignoreSSL);
-        }
-
-        return sandboxResponse.getData().id;
     }
 
-    public void StopSandbox(String sandboxId, boolean isSync) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    void StopSandbox(String sandboxId, boolean isSync) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         sandboxAPIService.stopSandbox(sandboxId);
 
         if (isSync)
@@ -79,18 +81,18 @@ public class SandboxAPILogic {
         }
     }
 
-    public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         long startTime = System.currentTimeMillis();
 
         String sandboxStatus = GetSandBoxStatus(sandboxId);
-        while (!sandboxStatus.equals(status) && (System.currentTimeMillis()-startTime) < timeoutSec*1000)
+        while (!sandboxStatus.equals(status) && (System.currentTimeMillis()-startTime) < timeoutSec *1000)
         {
             if (sandboxStatus.equals("Error"))
             {
                 throw new SandboxApiException("Sandbox status is: Error");
             }
             try {
-                Thread.sleep(1500);
+                Thread.sleep(3000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -102,19 +104,19 @@ public class SandboxAPILogic {
         return SandboxDetails(sandboxId).state;
     }
 
-    public SandboxDetailsResponse SandboxDetails(String sandboxId) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, SandboxApiException {
+    SandboxDetailsResponse SandboxDetails(String sandboxId) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, SandboxApiException {
         return sandboxAPIService.getSandbox(sandboxId).getData();
     }
 
-    public String Login() throws IOException, SandboxApiException {
+    String Login() throws IOException, SandboxApiException {
         return sandboxAPIService.login().getData();
     }
 
-    public ResponseData<CreateSandboxResponse[]> GetBlueprints() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
+    ResponseData<CreateSandboxResponse[]> GetBlueprints() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
         return sandboxAPIService.getBlueprints();
     }
 
-    public void VerifyTeardownSucceeded (String sandboxId) throws IOException, SandboxApiException {
+    void VerifyTeardownSucceeded(String sandboxId) throws IOException, SandboxApiException {
         ResponseData<SandboxActivity> sandboxActivity = sandboxAPIService.getSandboxActivity(sandboxId, 100, null, null, null);
         for (SandboxActivityEvent event: sandboxActivity.getData().events) {
             if (event.event_text.contains("'Teardown' Blueprint command") && event.event_text.contains("failed")){

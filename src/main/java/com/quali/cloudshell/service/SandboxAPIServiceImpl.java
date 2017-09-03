@@ -2,11 +2,11 @@ package com.quali.cloudshell.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.quali.cloudshell.Constants;
 import com.quali.cloudshell.api.*;
 import com.quali.cloudshell.qsExceptions.InvalidApiCallException;
 import com.quali.cloudshell.qsExceptions.SandboxApiException;
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -36,6 +36,13 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
 
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
+        boolean isDebug= Boolean.valueOf(System.getenv("CLOUDSHELL_DEBUG"));
+        if (isDebug) {
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+            builder.addInterceptor(logging);
+        }
+
         if (connection.ignoreSsl) {
             ignoreSsl(builder);
         }
@@ -43,9 +50,6 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
         builder.connectTimeout(30, TimeUnit.SECONDS);
         builder.readTimeout(30, TimeUnit.SECONDS);
         builder.writeTimeout(30, TimeUnit.SECONDS);
-//
-//        builder.connectTimeout(Constants.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-//        builder.readTimeout(Constants.RESPONSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         SandboxAPIAuthenticator sandboxAPIAuthenticator = new SandboxAPIAuthenticator(new SandboxAPIAuthProvider() {
             @Override
@@ -137,13 +141,11 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
 
     public ResponseData<CreateSandboxResponse> createSandbox(String blueprintId, CreateSandboxRequest sandboxRequest) throws RuntimeException, IOException, SandboxApiException {
 
-        ResponseData<CreateSandboxResponse> responseData = execute(sandboxAPI.createSandbox(blueprintId, sandboxRequest));
-
-        return responseData;
+        return execute(sandboxAPI.createSandbox(blueprintId, sandboxRequest));
     }
 
-    public ResponseData<DeleteSandboxResponse> stopSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
-        return execute(sandboxAPI.stopSandbox(sandboxId));
+    public void stopSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
+        execute(sandboxAPI.stopSandbox(sandboxId));
     }
 
     public ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
