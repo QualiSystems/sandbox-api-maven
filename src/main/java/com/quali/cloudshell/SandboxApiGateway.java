@@ -1,6 +1,7 @@
 package com.quali.cloudshell;
 
 import com.quali.cloudshell.api.CreateSandboxResponse;
+import com.quali.cloudshell.api.SandboxDetailsResponse;
 import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.qsExceptions.SandboxApiException;
 import com.quali.cloudshell.logger.QsLogger;
@@ -28,9 +29,9 @@ public class SandboxApiGateway
         this.logic = new SandboxAPILogic(qsServerDetails, qsLogger);
     }
 
-    public String GetSandboxDetails(String sandboxId)
+    public SandboxDetailsResponse GetSandboxDetails(String sandboxId)
             throws SandboxApiException, IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        return logic.SandboxDetails(sandboxId).toString();
+        return logic.SandboxDetails(sandboxId);
     }
 
     public ArrayList<String> GetBlueprintsNames()
