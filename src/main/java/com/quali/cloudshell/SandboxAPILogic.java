@@ -59,7 +59,7 @@ class SandboxAPILogic {
             ResponseData<CreateSandboxResponse> sandboxResponse = sandboxAPIService.createSandbox(blueprintName, sandboxRequest);
 
             if (isSync)
-                WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.CONNECT_TIMEOUT_SECONDS, this.server.ignoreSSL);
+                WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.CONNECT_TIMEOUT_SECONDS);
 
             return sandboxResponse.getData().id;
         }
@@ -77,11 +77,11 @@ class SandboxAPILogic {
 
         if (isSync)
         {
-            WaitForSandBox(sandboxId, "Ended", Constants.CONNECT_TIMEOUT_SECONDS, this.server.ignoreSSL);
+            WaitForSandBox(sandboxId, "Ended", Constants.CONNECT_TIMEOUT_SECONDS);
         }
     }
 
-    void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    void WaitForSandBox(String sandboxId, String status, int timeoutSec) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         long startTime = System.currentTimeMillis();
 
         String sandboxStatus = GetSandBoxStatus(sandboxId);

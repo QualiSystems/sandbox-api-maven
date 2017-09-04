@@ -67,7 +67,7 @@ public class SandboxApiGateway
     }
 
     public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        logic.WaitForSandBox(sandboxId,status,timeoutSec,ignoreSSL);
+        logic.WaitForSandBox(sandboxId,status,timeoutSec);
     }
 
     public String TryStartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName,  Map<String, String> parameters, int timeoutIfSandboxUnavailable)

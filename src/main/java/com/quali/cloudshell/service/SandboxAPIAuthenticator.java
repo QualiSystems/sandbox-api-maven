@@ -9,7 +9,7 @@ public class SandboxAPIAuthenticator implements Authenticator {
 
     private final SandboxAPIAuthProvider sandboxAPISpecProvider;
 
-    public SandboxAPIAuthenticator (SandboxAPIAuthProvider sandboxAPISpecProvider) {
+    SandboxAPIAuthenticator(SandboxAPIAuthProvider sandboxAPISpecProvider) {
         this.sandboxAPISpecProvider = sandboxAPISpecProvider;
     }
 

@@ -51,7 +51,7 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
         builder.readTimeout(30, TimeUnit.SECONDS);
         builder.writeTimeout(30, TimeUnit.SECONDS);
 
-        SandboxAPIAuthenticator sandboxAPIAuthenticator = new SandboxAPIAuthenticator(new SandboxAPIAuthProvider() {
+        SandboxAPIAuthProvider sandboxAPISpecProvider = new SandboxAPIAuthProvider() {
             @Override
             public String getAuthToken() {
                 return authToken;
@@ -61,9 +61,11 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
             public void loginAndSetAuthToken() throws IOException, SandboxApiException {
                 authToken = login().getData();
             }
-        });
+        };
 
-        builder.addInterceptor(new SandboxAPIRequestInterceptor());
+        SandboxAPIAuthenticator sandboxAPIAuthenticator = new SandboxAPIAuthenticator(sandboxAPISpecProvider);
+
+        builder.addInterceptor(new SandboxAPIRequestInterceptor(sandboxAPISpecProvider));
 
         builder.authenticator(sandboxAPIAuthenticator);
 
