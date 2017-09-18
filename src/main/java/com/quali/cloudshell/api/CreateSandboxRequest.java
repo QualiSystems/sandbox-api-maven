@@ -1,16 +1,17 @@
-package com.quali.cloudshell;
+package com.quali.cloudshell.api;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StartSandBoxModel {
-    private String name;
-    private String duration;
+public class CreateSandboxRequest
+{
+    public final String duration;
+    public final String name;
     private List<Param> params;
 
-    public StartSandBoxModel(String name, String duration) {
-        this.name = name;
+    public CreateSandboxRequest(String duration, String name){
         this.duration = duration;
+        this.name = name;
         this.params = new ArrayList<Param>();
     }
 
@@ -34,7 +35,7 @@ public class StartSandBoxModel {
         private String name;
         private String value;
 
-        Param(String name, String value) {
+        public Param(String name, String value) {
             this.name = name;
             this.value = value;
         }
@@ -49,3 +50,4 @@ public class StartSandBoxModel {
 
     }
 }
+

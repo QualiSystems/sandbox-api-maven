@@ -1,90 +1,109 @@
 package com.quali.cloudshell;
 
-import com.google.gson.JsonElement;
+import com.quali.cloudshell.api.CreateSandboxResponse;
+import com.quali.cloudshell.api.SandboxDetailsResponse;
 import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.qsExceptions.SandboxApiException;
 import com.quali.cloudshell.logger.QsLogger;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SandboxApiGateway
 {
-    private final SandboxAPIProxy proxy;
+    private final SandboxAPILogic logic;
     private final QsLogger logger;
 
-    public SandboxApiGateway(String serverAddress, String user, String pw, String domain, boolean ignoreSSL, QsLogger qsLogger)
-    {
+    public SandboxApiGateway(String serverAddress, String user, String pw, String domain, boolean ignoreSSL, QsLogger qsLogger) throws SandboxApiException {
         this.logger = qsLogger;
-        this.proxy = new SandboxAPIProxy(new QsServerDetails(serverAddress, user, pw, domain, ignoreSSL), qsLogger);
+        this.logic = new SandboxAPILogic(new QsServerDetails(serverAddress, user, pw, domain, ignoreSSL), qsLogger);
     }
 
-    public SandboxApiGateway(QsLogger qsLogger, QsServerDetails qsServerDetails)
-    {
+    public SandboxApiGateway(QsLogger qsLogger, QsServerDetails qsServerDetails) throws SandboxApiException {
         this.logger = qsLogger;
-        this.proxy = new SandboxAPIProxy(qsServerDetails, qsLogger);
+        this.logic = new SandboxAPILogic(qsServerDetails, qsLogger);
     }
 
-    public String GetSandboxDetails(String sandboxId)
+    public SandboxDetailsResponse GetSandboxDetails(String sandboxId)
             throws SandboxApiException, IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        return proxy.SandboxDetails(sandboxId).toString();
+        return logic.SandboxDetails(sandboxId);
     }
 
     public ArrayList<String> GetBlueprintsNames()
             throws SandboxApiException, IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         ArrayList<String> names = new ArrayList<String>();
-        for (JsonElement blueprint : proxy.GetBlueprints()) {
-            names.add(blueprint.getAsJsonObject().get("name").getAsString());
-        }
+        for (CreateSandboxResponse blueprint : logic.GetBlueprints().getData()) names.add(blueprint.name);
         return names;
     }
 
+    public Map<String, String> TryParseBlueprintParams(String params) throws SandboxApiException {
+        if (params != null && !params.isEmpty()) {
+            Map<String, String> map = new HashMap<>();
+            String[] parameters = params.split(";");
+            for (String param: parameters) {
+                String[] split = param.trim().split("=");
+                if (split.length < 2) throw new SandboxApiException("Failed to parse blueprint parameters");
+                map.put(split[0], split[1]);
+            }
+            return map;
+        }
+        return null;
+    }
 
-    public RestResponse TryLogin() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
-        return proxy.Login();
+
+    public String TryLogin() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, SandboxApiException {
+        return logic.Login();
     }
 
     public void StopSandbox(String sandboxId, boolean isSync)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         logger.Info("Stopping Sandbox " + sandboxId);
-        proxy.StopSandbox(sandboxId, isSync);
+        logic.StopSandbox(sandboxId, isSync);
     }
 
     public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        proxy.WaitForSandBox(sandboxId,status,timeoutSec,ignoreSSL);
+        logic.WaitForSandBox(sandboxId,status,timeoutSec);
     }
 
-    public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName,  Map<String, String> parameters)
+    public String TryStartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName,  Map<String, String> parameters, int timeoutIfSandboxUnavailable)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-
-        return Start(blueprintName, duration, isSync, sandboxName, parameters);
-    }
-
-    public String StartBlueprint(String blueprintName, int duration, boolean isSync, String sandboxName)
-            throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-
-        return Start(blueprintName, duration, isSync, sandboxName, null);
-    }
-
-    private String Start(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        if (StringUtils.isBlank(sandboxName))
-            sandboxName = blueprintName + "_" + java.util.UUID.randomUUID().toString().substring(0, 5);
-
-        logger.Info("StartBlueprint: sandbox name set to be \"" + sandboxName + "\"");
 
         try {
-            String sandboxId = proxy.StartBluePrint(blueprintName, sandboxName, duration, isSync, parameters);
-            logger.Info("StartBlueprint: sandbox started with id: " + sandboxId);
-            return sandboxId;
+            return startSandbox(blueprintName, duration, isSync, sandboxName, parameters);
         }
+
         catch (ReserveBluePrintConflictException ce){
-            logger.Error(Constants.BLUEPRINT_CONFLICT_ERROR);
+            logger.Info("CloudShell Blueprint is unavailable, retrying to reserve...");
+            long startTime = System.currentTimeMillis();
+            while ((System.currentTimeMillis()-startTime) < timeoutIfSandboxUnavailable * 60 * 1000)
+            {
+                try {
+                    return startSandbox(blueprintName, duration, isSync, sandboxName, parameters);
+                }
+                catch (ReserveBluePrintConflictException e1){
+                    try {
+                        Thread.sleep(60 * 1000);
+                    } catch (InterruptedException e2) {
+                        e2.printStackTrace();
+                    }
+                }
+            }
+            throw new ReserveBluePrintConflictException(blueprintName, Constants.BLUEPRINT_CONFLICT_ERROR);
         }
-        return null;
+    }
+
+    public void VerifyTeardownSucceeded (String sandboxId) throws IOException, SandboxApiException{
+        logic.VerifyTeardownSucceeded(sandboxId);
+    }
+
+    private String startSandbox(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+        String sandboxId = logic.StartBlueprint(blueprintName, sandboxName, duration, isSync, parameters);
+        logger.Info("CloudShell: Sandbox " + sandboxId + " created successfully.");
+        return sandboxId;
     }
 }
