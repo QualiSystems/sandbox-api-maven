@@ -9,6 +9,6 @@ to add this to your project, add this section to your POM file:
 <dependency>
     <groupId>com.quali.cloudshell</groupId>
     <artifactId>sandbox-api</artifactId>
-    <version>1.1.0.8</version>
+    <version>1.1.0.9</version>
 </dependency>
 ```

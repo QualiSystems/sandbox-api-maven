@@ -62,7 +62,7 @@ public class SandboxApiGateway
 
     public void StopSandbox(String sandboxId, boolean isSync)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        logger.Info("Stopping Sandbox " + sandboxId);
+        logger.info("Stopping Sandbox " + sandboxId);
         logic.StopSandbox(sandboxId, isSync);
     }
 
@@ -78,7 +78,7 @@ public class SandboxApiGateway
         }
 
         catch (ReserveBluePrintConflictException ce){
-            logger.Info("CloudShell Blueprint is unavailable, retrying to reserve...");
+            logger.info("CloudShell Blueprint is unavailable, retrying to reserve...");
             long startTime = System.currentTimeMillis();
             while ((System.currentTimeMillis()-startTime) < timeoutIfSandboxUnavailable * 60 * 1000)
             {
@@ -103,7 +103,7 @@ public class SandboxApiGateway
 
     private String startSandbox(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         String sandboxId = logic.StartBlueprint(blueprintName, sandboxName, duration, isSync, parameters);
-        logger.Info("CloudShell: Sandbox " + sandboxId + " created successfully.");
+        logger.info("CloudShell: Sandbox " + sandboxId + " created successfully.");
         return sandboxId;
     }
 }
