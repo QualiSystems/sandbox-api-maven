@@ -4,6 +4,7 @@ import com.quali.cloudshell.qsExceptions.SandboxApiException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 import java.io.IOException;
 
@@ -24,8 +25,6 @@ public class SandboxAPIRequestInterceptor implements Interceptor {
                 .addHeader("Content-Type", "application/json")
                 .header("Authorization", "Basic " + authToken)
                 .build();
-
-        System.out.println(newRequest.url());
 
         return chain.proceed(newRequest);
     }
