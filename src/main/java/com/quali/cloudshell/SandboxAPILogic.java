@@ -18,6 +18,7 @@ import com.quali.cloudshell.api.*;
 import com.quali.cloudshell.logger.QsLogger;
 import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
 import com.quali.cloudshell.qsExceptions.SandboxApiException;
+import com.quali.cloudshell.qsExceptions.SandboxTimeoutException;
 import com.quali.cloudshell.qsExceptions.TeardownFailedException;
 import com.quali.cloudshell.service.SandboxAPIService;
 import com.quali.cloudshell.service.SandboxAPIServiceImpl;
@@ -85,11 +86,15 @@ class SandboxAPILogic {
         long startTime = System.currentTimeMillis();
 
         String sandboxStatus = GetSandBoxStatus(sandboxId);
-        while (!sandboxStatus.equals(status) && (System.currentTimeMillis()-startTime) < timeoutSec *1000)
+        while (!sandboxStatus.equals(status))
         {
             if (sandboxStatus.equals("Error"))
             {
                 throw new SandboxApiException("Sandbox status is: Error");
+            }
+            if ((System.currentTimeMillis()-startTime) > timeoutSec *1000)
+            {
+                throw new SandboxTimeoutException(sandboxId);
             }
             try {
                 Thread.sleep(3000);

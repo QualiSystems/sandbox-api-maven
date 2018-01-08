@@ -103,7 +103,7 @@ public class SandboxApiGateway
 
     private String startSandbox(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         String sandboxId = logic.StartBlueprint(blueprintName, sandboxName, duration, isSync, parameters);
-        logger.info("CloudShell: Sandbox " + sandboxId + " created successfully.");
+        logger.info("CloudShell: Sandbox " + sandboxId + " started successfully.");
         return sandboxId;
     }
 }
