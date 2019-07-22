@@ -41,7 +41,7 @@ class SandboxAPILogic {
         this.sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection(server.serverAddress, server.user, server.pw, server.domain, server.ignoreSSL));
     }
 
-    String StartBlueprint(String blueprintName, String sandboxName, int duration, boolean isSync, Map<String, String> parameters)
+    String StartBlueprint(String blueprintName, String sandboxName, int duration, boolean isSync, Map<String, String> parameters, int responseTimeoutSec)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
 
         if (StringUtils.isBlank(sandboxName))
@@ -60,25 +60,23 @@ class SandboxAPILogic {
             ResponseData<CreateSandboxResponse> sandboxResponse = sandboxAPIService.createSandbox(blueprintName, sandboxRequest);
 
             if (isSync)
-                WaitForSandBox(sandboxResponse.getData().id, "Ready", Constants.CONNECT_TIMEOUT_SECONDS);
+                WaitForSandBox(sandboxResponse.getData().id, "Ready", responseTimeoutSec);
 
             return sandboxResponse.getData().id;
-        }
-
-        catch (SandboxApiException e){
-            if (e.getMessage().contains(Constants.BLUEPRINT_CONFLICT_ERROR)){
+        } catch (SandboxApiException e) {
+            if (e.getMessage().contains(Constants.BLUEPRINT_CONFLICT_ERROR)) {
                 throw new ReserveBluePrintConflictException(blueprintName, e.getMessage());
             }
             throw new SandboxApiException(e.getMessage());
         }
     }
 
-    void StopSandbox(String sandboxId, boolean isSync) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    void StopSandbox(String sandboxId, boolean isSync, int responseTimeoutSec) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         sandboxAPIService.stopSandbox(sandboxId);
 
         if (isSync)
         {
-            WaitForSandBox(sandboxId, "Ended", Constants.CONNECT_TIMEOUT_SECONDS);
+            WaitForSandBox(sandboxId, "Ended", responseTimeoutSec);
         }
     }
 

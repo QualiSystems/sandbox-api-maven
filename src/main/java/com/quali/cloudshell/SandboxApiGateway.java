@@ -18,15 +18,30 @@ public class SandboxApiGateway
 {
     private final SandboxAPILogic logic;
     private final QsLogger logger;
+    private final int responseTimeoutSec;
 
     public SandboxApiGateway(String serverAddress, String user, String pw, String domain, boolean ignoreSSL, QsLogger qsLogger) throws SandboxApiException {
         this.logger = qsLogger;
         this.logic = new SandboxAPILogic(new QsServerDetails(serverAddress, user, pw, domain, ignoreSSL), qsLogger);
+        this.responseTimeoutSec = Constants.CONNECT_TIMEOUT_SECONDS;
     }
 
     public SandboxApiGateway(QsLogger qsLogger, QsServerDetails qsServerDetails) throws SandboxApiException {
         this.logger = qsLogger;
         this.logic = new SandboxAPILogic(qsServerDetails, qsLogger);
+        this.responseTimeoutSec = Constants.CONNECT_TIMEOUT_SECONDS;
+    }
+
+    public SandboxApiGateway(QsLogger qsLogger, QsServerDetails qsServerDetails, int sandboxResponseTimeoutSec) throws SandboxApiException {
+        this.logger = qsLogger;
+        this.logic = new SandboxAPILogic(qsServerDetails, qsLogger);
+        this.responseTimeoutSec = sandboxResponseTimeoutSec;
+    }
+
+    public SandboxApiGateway(String serverAddress, String user, String pw, String domain, boolean ignoreSSL, QsLogger qsLogger, int responseTimeoutSec) throws SandboxApiException {
+        this.logger = qsLogger;
+        this.logic = new SandboxAPILogic(new QsServerDetails(serverAddress, user, pw, domain, ignoreSSL), qsLogger);
+        this.responseTimeoutSec = responseTimeoutSec;
     }
 
     public SandboxDetailsResponse GetSandboxDetails(String sandboxId)
@@ -63,7 +78,7 @@ public class SandboxApiGateway
     public void StopSandbox(String sandboxId, boolean isSync)
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         logger.info("Stopping Sandbox " + sandboxId);
-        logic.StopSandbox(sandboxId, isSync);
+        logic.StopSandbox(sandboxId, isSync, this.responseTimeoutSec);
     }
 
     public void WaitForSandBox(String sandboxId, String status, int timeoutSec, boolean ignoreSSL) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
@@ -74,7 +89,7 @@ public class SandboxApiGateway
             throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
 
         try {
-            return startSandbox(blueprintName, duration, isSync, sandboxName, parameters);
+            return startSandbox(blueprintName, duration, isSync, sandboxName, parameters, responseTimeoutSec);
         }
 
         catch (ReserveBluePrintConflictException ce){
@@ -83,7 +98,7 @@ public class SandboxApiGateway
             while ((System.currentTimeMillis()-startTime) < timeoutIfSandboxUnavailable * 60 * 1000)
             {
                 try {
-                    return startSandbox(blueprintName, duration, isSync, sandboxName, parameters);
+                    return startSandbox(blueprintName, duration, isSync, sandboxName, parameters, responseTimeoutSec);
                 }
                 catch (ReserveBluePrintConflictException e1){
                     try {
@@ -101,8 +116,8 @@ public class SandboxApiGateway
         logic.VerifyTeardownSucceeded(sandboxId);
     }
 
-    private String startSandbox(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        String sandboxId = logic.StartBlueprint(blueprintName, sandboxName, duration, isSync, parameters);
+    private String startSandbox(String blueprintName, int duration, boolean isSync, String sandboxName, Map<String, String> parameters, int responseTimeoutSec) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+        String sandboxId = logic.StartBlueprint(blueprintName, sandboxName, duration, isSync, parameters, responseTimeoutSec);
         logger.info("CloudShell: Sandbox " + sandboxId + " started successfully.");
         return sandboxId;
     }
