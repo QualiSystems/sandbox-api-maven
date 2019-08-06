@@ -23,6 +23,7 @@ import com.quali.cloudshell.qsExceptions.TeardownFailedException;
 import com.quali.cloudshell.service.SandboxAPIService;
 import com.quali.cloudshell.service.SandboxAPIServiceImpl;
 import com.quali.cloudshell.service.SandboxServiceConnection;
+import jdk.nashorn.internal.ir.CatchNode;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -72,7 +73,11 @@ class SandboxAPILogic {
     }
 
     void StopSandbox(String sandboxId, boolean isSync, int responseTimeoutSec) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
-        sandboxAPIService.stopSandbox(sandboxId);
+        try {
+            sandboxAPIService.stopSandbox(sandboxId);
+        } catch (SandboxApiException e) {
+            throw new SandboxApiException(e.getMessage());
+        }
 
         if (isSync)
         {
@@ -83,9 +88,15 @@ class SandboxAPILogic {
     void WaitForSandBox(String sandboxId, String status, int timeoutSec) throws SandboxApiException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         long startTime = System.currentTimeMillis();
 
-        String sandboxStatus = GetSandBoxStatus(sandboxId);
+        String sandboxStatus = "";
         while (!sandboxStatus.equals(status))
         {
+            try {
+                sandboxStatus = GetSandBoxStatus(sandboxId);
+            } catch (Exception e) {
+                sandboxStatus = "try again";
+            }
+
             if (sandboxStatus.equals("Error"))
             {
                 throw new SandboxApiException("Sandbox status is: Error");
@@ -99,7 +110,6 @@ class SandboxAPILogic {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            sandboxStatus = GetSandBoxStatus(sandboxId);
         }
     }
 
@@ -122,6 +132,7 @@ class SandboxAPILogic {
     void VerifyTeardownSucceeded(String sandboxId) throws IOException, SandboxApiException {
         ResponseData<SandboxActivity> sandboxActivity = sandboxAPIService.getSandboxActivity(sandboxId, 100, null, null, null);
         for (SandboxActivityEvent event: sandboxActivity.getData().events) {
+            //TODO: for CS 9.3+, where the driver is not executing the teardown script, make sure this validation is still correct
             if (event.event_text.contains("'Teardown' Blueprint command") && event.event_text.contains("failed")){
                 throw new TeardownFailedException(sandboxId, event.event_text);
             }

@@ -1,10 +1,8 @@
 package com.quali.cloudshell.service;
 
-import com.quali.cloudshell.qsExceptions.SandboxApiException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 import java.io.IOException;
 
@@ -20,6 +18,8 @@ public class SandboxAPIRequestInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
 
         String authToken = sandboxAPISpecProvider.getAuthToken();
+
+        sandboxAPISpecProvider.setAuthToken(authToken);
 
         Request newRequest = chain.request().newBuilder()
                 .addHeader("Content-Type", "application/json")

@@ -61,6 +61,10 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
             public void loginAndSetAuthToken() throws IOException, SandboxApiException {
                 authToken = login().getData();
             }
+            @Override
+            public void setAuthToken(String token) {
+                authToken = token;
+            }
         };
 
         SandboxAPIAuthenticator sandboxAPIAuthenticator = new SandboxAPIAuthenticator(sandboxAPISpecProvider);
@@ -127,31 +131,31 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
     }
 
     public ResponseData<String> login() throws RuntimeException, IOException, SandboxApiException {
-        ResponseData<String> responseData = execute(sandboxAPI.login(user));
+        ResponseData<String> responseData = execute(sandboxAPI.login(user),5);
         if (!responseData.isSuccessful())
             throw new SandboxApiException("Failed to login: " + responseData.getError());
         return responseData;
     }
 
     public ResponseData<CreateSandboxResponse[]> getBlueprints() throws RuntimeException, IOException, SandboxApiException {
-        return execute(sandboxAPI.getBlueprint());
+        return execute(sandboxAPI.getBlueprint(),5);
     }
 
     public ResponseData<SandboxActivity> getSandboxActivity(String sandboxId, Integer tail , Long from_event_id, String since, Boolean error_only) throws RuntimeException, IOException, SandboxApiException {
-        return execute(sandboxAPI.getSandboxActivity(sandboxId, error_only, since, from_event_id, tail));
+        return execute(sandboxAPI.getSandboxActivity(sandboxId, error_only, since, from_event_id, tail),5);
     }
 
     public ResponseData<CreateSandboxResponse> createSandbox(String blueprintId, CreateSandboxRequest sandboxRequest) throws RuntimeException, IOException, SandboxApiException {
 
-        return execute(sandboxAPI.createSandbox(blueprintId, sandboxRequest));
+        return execute(sandboxAPI.createSandbox(blueprintId, sandboxRequest),0);
     }
 
     public void stopSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
-        execute(sandboxAPI.stopSandbox(sandboxId));
+        execute(sandboxAPI.stopSandbox(sandboxId),5);
     }
 
     public ResponseData<SandboxDetailsResponse> getSandbox(String sandboxId) throws RuntimeException, IOException, SandboxApiException {
-        return execute(sandboxAPI.getSandbox(sandboxId));
+        return execute(sandboxAPI.getSandbox(sandboxId),0);
     }
 
     private static <T> ResponseData<T> parseResponse(final Response<T> response) throws IOException, SandboxApiException {
@@ -166,8 +170,39 @@ public class SandboxAPIServiceImpl implements SandboxAPIService{
         return ResponseData.ok(response.body(),response.code()).setMessage(message);
     }
 
-    public <T> ResponseData<T> execute(Call<T> call) throws IOException, SandboxApiException {
-        Response<T> execute = call.execute();
-        return parseResponse(execute);
+    public <T> ResponseData<T> execute(Call<T> call, Integer retries) throws IOException, SandboxApiException {
+
+        String errors = "";
+        while (retries>=0) {
+            try {
+                retries--;
+                Response<T> execute = call.clone().execute();
+                return parseResponse(execute);
+            }
+
+            catch (SandboxApiException sae) {
+                System.out.println(sae.getMessage());
+                errors += sae.getMessage() + "\r\n";
+                if (!sae.getMessage().contains("Request rate quota has been exceeded"))
+                    throw new SandboxApiException(sae.getMessage());
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+                errors += e.getMessage() + "\r\n";
+            }
+
+            if (retries<=0) {
+                throw new SandboxApiException(errors);
+            }
+            else {
+                try {
+                    Thread.sleep(1500);
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        return null;
+
     }
 }

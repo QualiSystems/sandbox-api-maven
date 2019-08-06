@@ -27,7 +27,7 @@ public class SandboxAPIServiceImplTest {
 //
 //    @Test
 //    public void createSandbox() throws Exception {
-//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("https://localhost:3443", "admin", "admin", "Global", true));
+//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("http://localhost:82", "admin", "admin", "Global", true));
 //        ResponseData<CreateSandboxResponse> sandbox = sandboxAPIService.createSandbox("empty",
 //                new CreateSandboxRequest("PT23H", "tomertomer"));
 //
@@ -36,7 +36,7 @@ public class SandboxAPIServiceImplTest {
 //
 //    @Test
 //    public void loginSandbox() throws Exception {
-//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("https://localhost:3443", "admin", "admin", "Global", true));
+//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("http://localhost:82", "admin", "admin", "Global", true));
 //        ResponseData<String> login = sandboxAPIService.login();
 //        System.out.print(login.getData());
 //    }
@@ -50,15 +50,15 @@ public class SandboxAPIServiceImplTest {
 ////
 //    @Test
 //    public void getSandbox() throws Exception {
-//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("https://localhost:3443", "admin", "admin", "Global", true));
-//        ResponseData<SandboxDetailsResponse> sandbox = sandboxAPIService.getSandbox("d5a004bf-98aa-4d3a-a8d1-0fc8cd204f8b");
+//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("http://localhost:82", "admin", "admin", "Global", true));
+//        ResponseData<SandboxDetailsResponse> sandbox = sandboxAPIService.getSandbox("86152d6f-cb76-44f5-951c-a950c8eb49b8");
 //        System.out.print(sandbox.getData());
 //    }
 //
 //    @Test
 //    public void getSandboxActivityFeeed() throws Exception {
-//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("http://192.168.85.11:82", "admin", "admin", "Global", true));
-//        ResponseData<SandboxActivity> sandboxActivity = sandboxAPIService.getSandboxActivity("de25599c-c9d8-4b84-b173-50fd9202af22", 100, null, null, null);
+//        SandboxAPIServiceImpl sandboxAPIService = new SandboxAPIServiceImpl(new SandboxServiceConnection("http://localhost:82", "admin", "admin", "Global", true));
+//        ResponseData<SandboxActivity> sandboxActivity = sandboxAPIService.getSandboxActivity("86152d6f-cb76-44f5-951c-a950c8eb49b8", 100, null, null, null);
 //        for (SandboxActivityEvent event: sandboxActivity.getData().events) {
 //            if (event.event_text.contains("'Teardown' Blueprint command") && event.event_text.contains("failed")){
 //                Assert.fail();

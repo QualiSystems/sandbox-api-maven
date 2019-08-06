@@ -8,4 +8,5 @@ import java.io.IOException;
 interface SandboxAPIAuthProvider {
     String getAuthToken();
     void loginAndSetAuthToken() throws IOException, SandboxApiException;
+    void setAuthToken(String token);
 }
