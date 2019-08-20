@@ -16,10 +16,7 @@ package com.quali.cloudshell;
 
 import com.quali.cloudshell.api.*;
 import com.quali.cloudshell.logger.QsLogger;
-import com.quali.cloudshell.qsExceptions.ReserveBluePrintConflictException;
-import com.quali.cloudshell.qsExceptions.SandboxApiException;
-import com.quali.cloudshell.qsExceptions.SandboxTimeoutException;
-import com.quali.cloudshell.qsExceptions.TeardownFailedException;
+import com.quali.cloudshell.qsExceptions.*;
 import com.quali.cloudshell.service.SandboxAPIService;
 import com.quali.cloudshell.service.SandboxAPIServiceImpl;
 import com.quali.cloudshell.service.SandboxServiceConnection;
@@ -57,18 +54,22 @@ class SandboxAPILogic {
             }
         }
 
+        String sandboxId = "";
         try {
             ResponseData<CreateSandboxResponse> sandboxResponse = sandboxAPIService.createSandbox(blueprintName, sandboxRequest);
-
+            sandboxId = sandboxResponse.getData().id;
             if (isSync)
-                WaitForSandBox(sandboxResponse.getData().id, "Ready", responseTimeoutSec);
+                WaitForSandBox(sandboxId, "Ready", responseTimeoutSec);
 
             return sandboxResponse.getData().id;
         } catch (SandboxApiException e) {
             if (e.getMessage().contains(Constants.BLUEPRINT_CONFLICT_ERROR)) {
                 throw new ReserveBluePrintConflictException(blueprintName, e.getMessage());
             }
-            throw new SandboxApiException(e.getMessage());
+            if (!sandboxId.equals(""))
+                throw new ExtendedSandboxApiException(e.getMessage(), sandboxId);
+            else
+                throw new SandboxApiException(e.getMessage());
         }
     }
 
