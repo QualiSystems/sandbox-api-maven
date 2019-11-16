@@ -1,3 +1,4 @@
+# Based on this one: https://github.com/springboot-testcontainer/springboot-testcontainer-selenium/blob/99e2440edc89ac15b4abbae568e7912572b8cce3/.github/workflows/release.yml
 name: Pack & Publish
 
 on: [push, pull_request]
