@@ -163,9 +163,13 @@
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-gpg-plugin -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <!--<configuration>-->
-          <!--<skip>true</skip>-->
-        <!--</configuration>-->
+            <configuration>
+              <!-- Hopefully fixed in version 1.7 ? (https://issues.apache.org/jira/browse/MGPG-59) -->
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
         <version>1.6</version>
         <executions>
           <execution>
