@@ -1,4 +1,4 @@
-[![Dependency Status](https://dependencyci.com/github/QualiSystems/sandbox-api-maven/badge)](https://dependencyci.com/github/QualiSystems/sandbox-api-maven)
+[![Actions Status](https://github.com/QualiSystems/sandbox-api-maven/workflows/Pack%20%26%20Publish/badge.svg)](https://github.com/QualiSystems/sandbox-api-maven/actions)
 
 # sandbox-api-maven
 Maven project for easy use of the CloudShell Sandbox API
