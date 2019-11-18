@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/QualiSystems/sandbox-api-maven/workflows/Pack%20%26%20Publish/badge.svg)](https://github.com/QualiSystems/sandbox-api-maven/actions)
+[![Actions Status](https://github.com/QualiSystems/sandbox-api-maven/workflows/Pack%20%26%20Publish/badge.svg)](https://github.com/QualiSystems/sandbox-api-maven/actions) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.quali.cloudshell/sandbox-api/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.quali.cloudshell/sandbox-api)
 
 # sandbox-api-maven
 Maven project for easy use of the CloudShell Sandbox API
