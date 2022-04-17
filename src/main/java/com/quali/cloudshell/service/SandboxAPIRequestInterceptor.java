@@ -17,15 +17,30 @@ public class SandboxAPIRequestInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
 
+        Request newRequest;
         String authToken = sandboxAPISpecProvider.getAuthToken();
 
-        sandboxAPISpecProvider.setAuthToken(authToken);
+        if (chain.request().url().toString().toLowerCase().contains("login"))
+        {
 
-        Request newRequest = chain.request().newBuilder()
-                .addHeader("Content-Type", "application/json")
-                .header("Authorization", "Basic " + authToken)
-                .build();
+            sandboxAPISpecProvider.setAuthToken(authToken);
 
+            newRequest = chain.request().newBuilder()
+                    .addHeader("Content-Type", "application/json")
+                    .header("Authorization", "Basic " + authToken)
+                    .build();
+
+        }
+    
+        else
+        {
+            try{ sandboxAPISpecProvider.loginAndSetAuthToken();}
+            catch (Exception e) {}
+            newRequest = chain.request().newBuilder()
+                    .addHeader("Content-Type", "application/json")
+                    .header("Authorization", "Basic " + sandboxAPISpecProvider.getAuthToken())
+                    .build();
+        }
         return chain.proceed(newRequest);
     }
 }
